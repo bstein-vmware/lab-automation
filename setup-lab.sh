@@ -382,7 +382,7 @@ vcfa_url            = "https://auto-a.site-a.vcf.lab"
 namespace           = "e2e-ns"
 cluster             = "$CLUSTER_NAME"
 bootstrap_revision  = "2.0.0"
-k8s_version         = "v1.34.1+vmware.1"
+k8s_version         = "v1.35.2+vmware.1"
 vcfa_refresh_token  = "$VCFA_TOKEN"
 cluster_class       = "builtin-generic-v3.6.0"
 EOF
