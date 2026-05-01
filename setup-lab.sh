@@ -59,10 +59,16 @@ if [[ "$LAB_ENV" == "vks" ]]; then
     VCFA_ORG="Broadcom"
     VCFA_USER="broadcomadmin"
     SUPERVISOR_ENDPOINT="10.1.0.6"
+    REGION_NAME="us-west"
+    VPC_NAME="us-west-Default-VPC"
+    ZONE_NAME="z-wld-a"
 else
     VCFA_ORG="all-apps"
     VCFA_USER="all-apps-admin"
     SUPERVISOR_ENDPOINT="10.1.0.2"
+    REGION_NAME="us-west-region"
+    VPC_NAME="us-west-region-default-vpc"
+    ZONE_NAME="z-wld-a"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -374,9 +380,9 @@ else
 
     echo "Injecting static and dynamic variables..."
     cat << EOF > terraform.tfvars
-region_name         = "us-west-region"
-vpc_name            = "us-west-region-default-vpc"
-zone_name           = "z-wld-a"
+region_name         = "$REGION_NAME"
+vpc_name            = "$VPC_NAME"
+zone_name           = "$ZONE_NAME"
 vcfa_org            = "$VCFA_ORG"
 vcfa_url            = "https://auto-a.site-a.vcf.lab"
 namespace           = "e2e-ns"
