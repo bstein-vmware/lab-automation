@@ -83,7 +83,7 @@ echo "Verifying folder structure..."
 LAB_DIR="$HOME/field-lab"
 REPO_DIR="$LAB_DIR/vcfa-terraform-examples"
 DESKTOP_DIR="$HOME/Desktop"
-CLUSTER_NAME="e2e-niran-cls01"
+CLUSTER_NAME="e2e-cls01"
 
 mkdir -p "$LAB_DIR"
 mkdir -p "$DESKTOP_DIR"
