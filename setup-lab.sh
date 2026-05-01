@@ -62,6 +62,8 @@ if [[ "$LAB_ENV" == "vks" ]]; then
     REGION_NAME="us-west"
     VPC_NAME="us-west-Default-VPC"
     ZONE_NAME="z-wld-a"
+    STORAGE_POLICY="vSAN Default Storage Policy"
+    STORAGE_CLASS="vsan-default-storage-policy"
 else
     VCFA_ORG="all-apps"
     VCFA_USER="all-apps-admin"
@@ -69,6 +71,8 @@ else
     REGION_NAME="us-west-region"
     VPC_NAME="us-west-region-default-vpc"
     ZONE_NAME="z-wld-a"
+    STORAGE_POLICY="cluster-wld01-01a vSAN Storage Policy"
+    STORAGE_CLASS="cluster-wld01-01a-vsan-storage-policy"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -90,6 +94,7 @@ SVC_DIR="$SCRIPT_DIR/supervisor-services"
 VCENTER_CLUSTER_NAME="cluster-wld01-01a"
 TOKEN_FILE="$DESKTOP_DIR/vcfa_api_token.txt"
 TFVARS_FILE="$REPO_DIR/argo-e2e/terraform.tfvars"
+ARGOCD_VERSION="3.0.19+vmware.1-vks.1"
 
 
 # --- 2. Install Supervisor Services ---
@@ -239,19 +244,6 @@ else
     git clone https://github.com/warroyo/vcfa-terraform-examples "$REPO_DIR"
 fi
 
-echo "Patching storage policy in the namespace module..."
-sed -i 's/"vSAN Default Storage Policy"/"cluster-wld01-01a vSAN Storage Policy"/g' "$REPO_DIR/modules/namespace/main.tf"
-
-echo "Patching ArgoCD version in the argocd module..."
-sed -i -E 's/"version"[[:space:]]*=[[:space:]]*"[^"]*"/"version" = "3.0.19+vmware.1-vks.1"/g' "$REPO_DIR/modules/argocd-instance/main.tf"
-
-
-echo "Patching VKS cluster class version..."
-sed -i -E 's/"builtin-generic-v[0-9\.]+"/"builtin-generic-v3.5.0"/g' "$REPO_DIR/modules/vks-cluster/variables.tf"
-
-echo "Patching VKS storage class in K8s manifest format..."
-find "$REPO_DIR/modules/vks-cluster" -type f -exec sed -i 's/vsan-default-storage-policy/cluster-wld01-01a-vsan-storage-policy/g' {} +
-
 
 # --- 7. Save Credentials to Desktop ---
 echo "Saving credentials to Desktop..."
@@ -387,10 +379,13 @@ vcfa_org            = "$VCFA_ORG"
 vcfa_url            = "https://auto-a.site-a.vcf.lab"
 namespace           = "e2e-ns"
 cluster             = "$CLUSTER_NAME"
-bootstrap_revision  = "2.0.0"
+bootstrap_revision  = "main"
 k8s_version         = "v1.35.2+vmware.1"
 vcfa_refresh_token  = "$VCFA_TOKEN"
 cluster_class       = "builtin-generic-v3.6.0"
+argocd_version      = "$ARGOCD_VERSION"
+storage_class_name      = "$STORAGE_POLICY"
+vks_storage_class       = "$STORAGE_CLASS"
 EOF
 fi
 
