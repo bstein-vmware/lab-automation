@@ -562,9 +562,9 @@ if [ -f ~/.kube/config ] && grep -q "$CLUSTER_NAME" ~/.kube/config 2>/dev/null; 
     fi
 
     echo "-> Creating VCF context for VKS cluster (kubecontext: $CLUSTER_CTX)..."
-    if ! timeout 60 bash -c "yes | vcf context create e2e-niran-cls-01 --kubeconfig ~/.kube/config --kubecontext \"$CLUSTER_CTX\" --type cci 2>&1"; then
+    if ! timeout 60 bash -c "yes | vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext \"$CLUSTER_CTX\" --type cci 2>&1"; then
         echo "⚠️ Context creation timed out. You can run this manually:"
-        echo "   vcf context create e2e-niran-cls-01 --kubeconfig ~/.kube/config --kubecontext $CLUSTER_CTX --type cci"
+        echo "   vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext $CLUSTER_CTX --type cci"
     fi
 
     # Verify the context actually works
@@ -585,7 +585,7 @@ else
     echo "   vcf cluster register-vcfa-jwt-authenticator $CLUSTER_NAME"
     echo "   vcf cluster kubeconfig get $CLUSTER_NAME --export-file ~/.kube/config"
     echo "   grep $CLUSTER_NAME ~/.kube/config   # find the context with @"
-    echo "   vcf context create e2e-niran-cls-01 --kubeconfig ~/.kube/config --kubecontext <name@ns> --type cci"
+    echo "   vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext <name@ns> --type cci"
 fi
 
 
@@ -597,7 +597,7 @@ echo ""
 echo "  VCF CLI Contexts configured:"
 echo "    • supervisor-ctx   → Supervisor ($SUPERVISOR_ENDPOINT)"
 echo "    • vcfa             → VCFA (auto-a.site-a.vcf.lab)"
-echo "    • e2e-niran-cls-01 → VKS Cluster ($CLUSTER_NAME)"
+echo "    • $CLUSTER_NAME → VKS Cluster"
 echo ""
 echo "  Dropping you into Oh My Zsh..."
 
