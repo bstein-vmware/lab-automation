@@ -4,7 +4,7 @@ Welcome to the Field Lab automation project! This repository contains a fully au
 
 ## 🚀 Quick Start
 
-To get started, simply open your terminal and paste the following command. This is all you need to do to kick off the entire deployment:
+To get started, simply open your terminal and paste the following command. The script will ask you two quick questions (which mode and which lab environment) before kicking off the fully automated deployment:
 
 ```bash
 echo 'VMware123!VMware123!' | sudo -S sed -i 's/^Components:.*/Components: main restricted universe multiverse/' /etc/apt/sources.list.d/ubuntu.sources && sudo apt update -y && sudo apt install -y git && cd ~/Downloads && git clone https://github.com/NiranEC77/lab-automation && cd lab-automation && chmod +x setup-lab.sh && ./setup-lab.sh
