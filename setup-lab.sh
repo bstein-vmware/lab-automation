@@ -64,6 +64,7 @@ if [[ "$LAB_ENV" == "vks" ]]; then
     ZONE_NAME="z-wld-a"
     STORAGE_POLICY="vSAN Default Storage Policy"
     STORAGE_CLASS="vsan-default-storage-policy"
+    NS_STORAGE_LIMIT="100000Mi"
 else
     VCFA_ORG="all-apps"
     VCFA_USER="all-apps-admin"
@@ -73,6 +74,7 @@ else
     ZONE_NAME="z-wld-a"
     STORAGE_POLICY="cluster-wld01-01a vSAN Storage Policy"
     STORAGE_CLASS="cluster-wld01-01a-vsan-storage-policy"
+    NS_STORAGE_LIMIT="102400Mi"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -382,6 +384,7 @@ cluster_class       = "builtin-generic-v3.6.0"
 argocd_version      = "$ARGOCD_VERSION"
 storage_class_name      = "$STORAGE_POLICY"
 vks_storage_class       = "$STORAGE_CLASS"
+ns_storage_limit        = "$NS_STORAGE_LIMIT"
 EOF
 fi
 
