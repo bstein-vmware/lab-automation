@@ -79,16 +79,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Verifying folder structure..."
 LAB_DIR="$HOME/field-lab"
-BIN_DIR="$HOME/.local/bin"
 REPO_DIR="$LAB_DIR/vcfa-terraform-examples"
 DESKTOP_DIR="$HOME/Desktop"
 CLUSTER_NAME="e2e-niran-cls01"
 
 mkdir -p "$LAB_DIR"
-mkdir -p "$BIN_DIR"
 mkdir -p "$DESKTOP_DIR"
-
-export PATH="$BIN_DIR:$PATH"
 
 SVC_DIR="$SCRIPT_DIR/supervisor-services"
 VCENTER_CLUSTER_NAME="cluster-wld01-01a"
@@ -173,8 +169,8 @@ fi
 if ! command -v kubectl &> /dev/null; then
     echo "Installing kubectl..."
     curl -fsSLO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    chmod +x kubectl
-    mv kubectl "$BIN_DIR/"
+    echo "$LAB_PASS" | sudo -S install kubectl /usr/local/bin/kubectl
+    rm -f kubectl
 fi
 
 if ! command -v terraform &> /dev/null; then
