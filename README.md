@@ -16,17 +16,17 @@ The script starts by asking you two questions — which mode and which lab envir
 
 ### Lab Environments
 
-| Choice | Org / Tenant | VCFA User |
-|--------|-------------|-----------|
-| `vks` | Broadcom | broadcomadmin |
-| `adv` | all-apps | all-apps-admin |
+| Choice | Org / Tenant | VCFA User | Supervisor Endpoint |
+|--------|-------------|-----------|---------------------|
+| `vks` | Broadcom | broadcomadmin | 10.1.0.6 |
+| `adv` | all-apps | all-apps-admin | 10.1.0.2 |
 
 ### `prep` — Install & Configure (stops before Terraform deploy)
 
 Choose this when you want to get the environment ready while VKS upgrades and ArgoCD deployments are still installing in vCenter.
 
 - Installs all CLIs & prerequisites
-- Installs and activates supervisor services (VKS upgrade, ArgoCD, ArgoCD Attach) via PowerCLI
+- Installs and activates supervisor services (VKS upgrade, ArgoCD, ArgoCD Attach, Secret Store) via PowerCLI
 - Configures Zsh + Oh My Zsh
 - Clones and patches the Terraform repo
 - Automatically generates and stores your VCFA API token
@@ -71,9 +71,10 @@ Choose this for the complete flow. Deploy runs **all prep steps first** (skippin
 
 ### 5. Terraform Repo & Patching
 * **Git Automation:** Clones the `vcfa-terraform-examples` repository.
-* **On-the-fly Patching:** Automatically patches modules before deploy:
+* **On-the-fly Patching:** Automatically patches modules and injects Terraform variables:
   * Storage policy → `cluster-wld01-01a vSAN Storage Policy`
-  * VKS cluster class → `builtin-generic-v3.5.0`
+  * VKS cluster class → `builtin-generic-v3.6.0`
+  * Kubernetes version → `v1.34.1+vmware.1`
   * ArgoCD version → `3.0.19+vmware.1-vks.1`
   * Storage class → `cluster-wld01-01a-vsan-storage-policy`
 
@@ -91,17 +92,18 @@ The script automatically configures three VCF CLI contexts:
 
 | Context | Type | Purpose |
 |---------|------|---------|
-| `supervisor-ctx` | Kubernetes | Supervisor cluster access (10.1.0.2) |
+| `supervisor-ctx` | Kubernetes | Supervisor cluster access (10.1.0.6 for vks, 10.1.0.2 for adv) |
 | `vcfa` | VCFA | VCFA org-level access (auto-a.site-a.vcf.lab) |
 | `e2e-niran-cls-01` | CCI | VKS workload cluster access |
 
 For the VKS cluster context, the script:
 1. Auto-detects the VCFA namespace context
-2. Registers the VCFA JWT authenticator on the cluster
-3. Fetches the kubeconfig
-4. Parses the context name and creates the CCI context
+2. Waits for Pinniped Concierge stabilization and cluster API readiness
+3. Registers the VCFA JWT authenticator on the cluster
+4. Fetches the kubeconfig
+5. Parses the context name and creates the CCI context
 
-> All VCF CLI commands include timeout protection and automatic prompt handling to prevent the script from hanging.
+> All VCF CLI commands include timeout protection, non-interactive basic auth handling, and automatic prompt handling to prevent the script from hanging.
 
 ### 9. Finish Up
 * **Certificate Trust:** Downloads the VCFA SSL certificate chain for CLI trust.
