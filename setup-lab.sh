@@ -568,10 +568,10 @@ fi
 
 echo "-> Fetching kubeconfig for the VKS cluster..."
 mkdir -p ~/.kube
-if ! timeout 60 bash -c "yes | vcf cluster kubeconfig get \"$CLUSTER_NAME\" --export-file ~/.kube/config 2>&1"; then
-    echo "⚠️ Kubeconfig fetch timed out or failed."
+if ! vcf cluster kubeconfig get "$CLUSTER_NAME"; then
+    echo "⚠️ Kubeconfig fetch failed."
     echo "   You can run this manually later:"
-    echo "   vcf cluster kubeconfig get $CLUSTER_NAME --export-file ~/.kube/config"
+    echo "   vcf cluster kubeconfig get $CLUSTER_NAME"
 fi
 
 if [ -f ~/.kube/config ] && grep -q "$CLUSTER_NAME" ~/.kube/config 2>/dev/null; then
@@ -596,7 +596,7 @@ else
     echo ""
     echo "   vcf context use <namespace-context>"
     echo "   vcf cluster register-vcfa-jwt-authenticator $CLUSTER_NAME"
-    echo "   vcf cluster kubeconfig get $CLUSTER_NAME --export-file ~/.kube/config"
+    echo "   vcf cluster kubeconfig get $CLUSTER_NAME"
     echo "   Then switch with:  kctx <context-name>"
     echo ""
 fi
