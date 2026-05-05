@@ -93,6 +93,7 @@ VCENTER_CLUSTER_NAME="cluster-wld01-01a"
 TOKEN_FILE="$DESKTOP_DIR/vcfa_api_token.txt"
 TFVARS_FILE="$REPO_DIR/argo-e2e/terraform.tfvars"
 ARGOCD_VERSION="3.0.19+vmware.1-vks.1"
+K8S_VERSION="v1.35.2+vmware.1"
 
 
 # --- 2. Install Supervisor Services ---
@@ -378,7 +379,7 @@ vcfa_url            = "https://auto-a.site-a.vcf.lab"
 namespace           = "e2e-ns"
 cluster             = "$CLUSTER_NAME"
 bootstrap_revision  = "2.1.0"
-k8s_version         = "v1.35.2+vmware.1"
+k8s_version         = "$K8S_VERSION"
 vcfa_refresh_token  = "$VCFA_TOKEN"
 cluster_class       = "builtin-generic-v3.6.0"
 argocd_version      = "$ARGOCD_VERSION"
@@ -449,6 +450,31 @@ vcf context create vcfa \
   --tenant-name "$VCFA_ORG" \
   --ca-certificate "$VCFA_CERT_PATH" 2>/dev/null || echo "VCFA context may already exist. Continuing..."
 
+
+echo ""
+echo "Waiting for Kubernetes release $K8S_VERSION to be available in the supervisor cluster..."
+echo "  Checking 'kubectl get kr -A' every 30 seconds for up to 20 minutes..."
+echo ""
+
+vcf context use supervisor-ctx 2>/dev/null || true
+
+VKR_VERSION="${K8S_VERSION#v}"
+VKR_READY=false
+for i in $(seq 1 40); do
+    if kubectl get kr -A --no-headers 2>/dev/null | grep -q "$VKR_VERSION"; then
+        echo "✅ Kubernetes release $K8S_VERSION is available in the supervisor cluster."
+        VKR_READY=true
+        break
+    fi
+    echo "  [$i/40] Not available yet. Retrying in 30 seconds..."
+    sleep 30
+done
+
+if [ "$VKR_READY" = false ]; then
+    echo "❌ Timed out waiting for Kubernetes release $K8S_VERSION."
+    echo "   Run 'kubectl get kr -A' in the supervisor context to check current releases."
+    exit 1
+fi
 
 echo "Phase 2: Applying the rest of the infrastructure (ArgoCD, K8s cluster, etc.)..."
 terraform apply -auto-approve
