@@ -580,29 +580,16 @@ if [ -f ~/.kube/config ] && grep -q "$CLUSTER_NAME" ~/.kube/config 2>/dev/null; 
 
     if [ -z "$CLUSTER_CTX" ]; then
         echo "⚠️ Could not auto-detect the cluster context name."
-        echo "   Here are the matching entries in your kubeconfig:"
+        echo "   Matching entries in kubeconfig:"
+        grep "$CLUSTER_NAME" ~/.kube/config || true
         echo ""
-        cat ~/.kube/config | grep "$CLUSTER_NAME"
-        echo ""
-        read -p "   Please paste the context name (the one with the @ sign): " CLUSTER_CTX
+        read -p "   Paste the context name (the one with the @ sign): " CLUSTER_CTX
     fi
 
-    echo "-> Creating VCF context for VKS cluster (kubecontext: $CLUSTER_CTX)..."
-    if ! timeout 60 bash -c "yes | vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext \"$CLUSTER_CTX\" --type cci 2>&1"; then
-        echo "⚠️ Context creation timed out. You can run this manually:"
-        echo "   vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext $CLUSTER_CTX --type cci"
-    fi
-
-    # Verify the context actually works
     echo ""
-    echo "-> Verifying cluster access..."
-    sleep 5
-    if timeout 30 kubectl --context "$CLUSTER_CTX" get ns >/dev/null 2>&1; then
-        echo "   ✅ Cluster access verified! kubectl is working."
-    else
-        echo "   ⚠️ Cluster auth not working yet. Pinniped may still be initializing."
-        echo "   If this persists, run: ./test-cluster-ctx.sh"
-    fi
+    echo "  ✅ Cluster context is ready in your kubeconfig."
+    echo "     To switch to it, run:  kctx $CLUSTER_CTX"
+    echo ""
 else
     echo "⚠️ Kubeconfig does not contain $CLUSTER_NAME yet."
     echo "   The cluster may still be provisioning. Run these manually when ready:"
@@ -610,8 +597,8 @@ else
     echo "   vcf context use <namespace-context>"
     echo "   vcf cluster register-vcfa-jwt-authenticator $CLUSTER_NAME"
     echo "   vcf cluster kubeconfig get $CLUSTER_NAME --export-file ~/.kube/config"
-    echo "   grep $CLUSTER_NAME ~/.kube/config   # find the context with @"
-    echo "   vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext <name@ns> --type cci"
+    echo "   Then switch with:  kctx <context-name>"
+    echo ""
 fi
 
 
