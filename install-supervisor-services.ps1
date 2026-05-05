@@ -8,6 +8,22 @@ param(
     [string]$ConfigYamlPath = ""
 )
 
+function Wait-ForVersionActivated {
+    param([string]$ServiceName, [string]$Version, [int]$TimeoutSec = 120)
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        $v = $null
+        try { $v = Invoke-GetSupervisorServiceVersionNamespaceManagement -SupervisorService $ServiceName -Version $Version } catch {}
+        if ($v -and $v.State -eq "ACTIVATED") {
+            Write-Host "[$ServiceName] Version $Version is ACTIVATED."
+            return
+        }
+        Write-Host "[$ServiceName] Waiting for version $Version to activate (state: $($v.State))..."
+        Start-Sleep -Seconds 10
+    }
+    throw "[$ServiceName] Timed out waiting for version $Version to reach ACTIVATED state."
+}
+
 Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false | Out-Null
 Connect-VIServer -Server $VCenterServer -User $Username -Password $Password | Out-Null
 
@@ -30,6 +46,7 @@ if ($null -eq $existing) {
     $createSpec        = Initialize-NamespaceManagementSupervisorServicesCreateSpec               -CarvelSpec  $carvelSpec
     Invoke-CreateNamespaceManagementSupervisorServices `
         -NamespaceManagementSupervisorServicesCreateSpec $createSpec | Out-Null
+    Wait-ForVersionActivated -ServiceName $ServiceName -Version $version
 } else {
     $existingVersion = $null
     try { $existingVersion = Invoke-GetSupervisorServiceVersionNamespaceManagement -SupervisorService $ServiceName -Version $version } catch {}
@@ -41,6 +58,7 @@ if ($null -eq $existing) {
         Invoke-CreateSupervisorServiceNamespaceManagementVersions `
             -SupervisorService $ServiceName `
             -NamespaceManagementSupervisorServicesVersionsCreateSpec $versionSpec | Out-Null
+        Wait-ForVersionActivated -ServiceName $ServiceName -Version $version
     } else {
         Write-Host "[$ServiceName] Version $version already exists — skipping."
     }
