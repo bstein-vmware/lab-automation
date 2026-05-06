@@ -324,6 +324,7 @@ else
         ["argocd-attach.fling.vsphere.vmware.com"]="$SVC_DIR/argo-attach.yaml"
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service.yaml"
         ["harbor.tanzu.vmware.com"]="$SVC_DIR/harbor-service.yaml"
+        ["cci-ns.vmware.com"]="$SVC_DIR/lci-service.yaml"
     )
     declare -A _SERVICE_CONFIGS=(
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service-config.yaml"
@@ -380,7 +381,7 @@ vcfa_url            = "https://auto-a.site-a.vcf.lab"
 namespace           = "e2e-ns"
 cluster             = "$CLUSTER_NAME"
 bootstrap_revision  = "2.1.0"
-#k8s_version         = "v1.35.2---vmware.1-vkr.3"
+k8s_version         = "v1.35.2---vmware.1-vkr.3"
 vcfa_refresh_token  = "$VCFA_TOKEN"
 cluster_class       = "builtin-generic-v3.6.0"
 argocd_version      = "$ARGOCD_VERSION"
