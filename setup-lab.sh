@@ -93,7 +93,6 @@ VCENTER_CLUSTER_NAME="cluster-wld01-01a"
 TOKEN_FILE="$DESKTOP_DIR/vcfa_api_token.txt"
 TFVARS_FILE="$REPO_DIR/argo-e2e/terraform.tfvars"
 ARGOCD_VERSION="3.0.19+vmware.1-vks.1"
-K8S_VERSION="v1.35.2+vmware.1"
 
 
 # --- 2. Install Supervisor Services ---
@@ -324,9 +323,11 @@ else
         ["argocd-service.vsphere.vmware.com"]="$SVC_DIR/argocd-service.yaml"
         ["argocd-attach.fling.vsphere.vmware.com"]="$SVC_DIR/argo-attach.yaml"
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service.yaml"
+        ["harbor.tanzu.vmware.com"]="$SVC_DIR/harbor-service.yaml"
     )
     declare -A _SERVICE_CONFIGS=(
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service-config.yaml"
+        ["harbor.tanzu.vmware.com"]="$SVC_DIR/harbor-service-config.yaml"
     )
 
     for _SVC in "${!_SERVICES[@]}"; do
@@ -379,10 +380,11 @@ vcfa_url            = "https://auto-a.site-a.vcf.lab"
 namespace           = "e2e-ns"
 cluster             = "$CLUSTER_NAME"
 bootstrap_revision  = "2.1.0"
-k8s_version         = "$K8S_VERSION"
+k8s_version         = "v1.35.2+vmware.1-vkr.3"
 vcfa_refresh_token  = "$VCFA_TOKEN"
 cluster_class       = "builtin-generic-v3.6.0"
 argocd_version      = "$ARGOCD_VERSION"
+argo_password	    = "$LAB_PASSWORD"
 storage_class_name      = "$STORAGE_POLICY"
 vks_storage_class       = "$STORAGE_CLASS"
 ns_storage_limit        = "$NS_STORAGE_LIMIT"
@@ -450,38 +452,6 @@ vcf context create vcfa \
   --tenant-name "$VCFA_ORG" \
   --ca-certificate "$VCFA_CERT_PATH" 2>/dev/null || echo "VCFA context may already exist. Continuing..."
 
-
-echo ""
-echo "Waiting for Kubernetes release $K8S_VERSION to be available in the supervisor cluster..."
-echo "  Checking 'kubectl get kr -A' every 30 seconds for up to 20 minutes..."
-echo ""
-
-vcf context use supervisor-ctx 2>/dev/null || true
-
-VKR_VERSION="${K8S_VERSION#v}"
-VKR_READY=false
-for i in $(seq 1 40); do
-    KR_NAME=$(kubectl get kr -A --no-headers 2>/dev/null | grep "$VKR_VERSION" | awk '{print $2}' | head -1)
-    if [ -n "$KR_NAME" ]; then
-        IS_READY=$(kubectl get kr "$KR_NAME" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
-        IS_COMPATIBLE=$(kubectl get kr "$KR_NAME" -o jsonpath='{.status.conditions[?(@.type=="Compatible")].status}' 2>/dev/null)
-        if [ "$IS_READY" = "True" ] && [ "$IS_COMPATIBLE" = "True" ]; then
-            echo "✅ Kubernetes release $K8S_VERSION is Ready and Compatible in the supervisor cluster."
-            VKR_READY=true
-            break
-        fi
-        echo "  [$i/40] Found $KR_NAME but not ready yet (Ready=$IS_READY, Compatible=$IS_COMPATIBLE). Retrying in 30 seconds..."
-    else
-        echo "  [$i/40] Not available yet. Retrying in 30 seconds..."
-    fi
-    sleep 30
-done
-
-if [ "$VKR_READY" = false ]; then
-    echo "❌ Timed out waiting for Kubernetes release $K8S_VERSION."
-    echo "   Run 'kubectl get kr -A' in the supervisor context to check current releases."
-    exit 1
-fi
 
 echo "Phase 2: Applying the rest of the infrastructure (ArgoCD, K8s cluster, etc.)..."
 terraform apply -auto-approve
@@ -575,10 +545,10 @@ fi
 
 echo "-> Fetching kubeconfig for the VKS cluster..."
 mkdir -p ~/.kube
-if ! vcf cluster kubeconfig get "$CLUSTER_NAME"; then
-    echo "⚠️ Kubeconfig fetch failed."
+if ! timeout 60 bash -c "yes | vcf cluster kubeconfig get \"$CLUSTER_NAME\" --export-file ~/.kube/config 2>&1"; then
+    echo "⚠️ Kubeconfig fetch timed out or failed."
     echo "   You can run this manually later:"
-    echo "   vcf cluster kubeconfig get $CLUSTER_NAME"
+    echo "   vcf cluster kubeconfig get $CLUSTER_NAME --export-file ~/.kube/config"
 fi
 
 if [ -f ~/.kube/config ] && grep -q "$CLUSTER_NAME" ~/.kube/config 2>/dev/null; then
@@ -587,25 +557,38 @@ if [ -f ~/.kube/config ] && grep -q "$CLUSTER_NAME" ~/.kube/config 2>/dev/null; 
 
     if [ -z "$CLUSTER_CTX" ]; then
         echo "⚠️ Could not auto-detect the cluster context name."
-        echo "   Matching entries in kubeconfig:"
-        grep "$CLUSTER_NAME" ~/.kube/config || true
+        echo "   Here are the matching entries in your kubeconfig:"
         echo ""
-        read -p "   Paste the context name (the one with the @ sign): " CLUSTER_CTX
+        cat ~/.kube/config | grep "$CLUSTER_NAME"
+        echo ""
+        read -p "   Please paste the context name (the one with the @ sign): " CLUSTER_CTX
     fi
 
+    echo "-> Creating VCF context for VKS cluster (kubecontext: $CLUSTER_CTX)..."
+    if ! timeout 60 bash -c "yes | vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext \"$CLUSTER_CTX\" --type cci 2>&1"; then
+        echo "⚠️ Context creation timed out. You can run this manually:"
+        echo "   vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext $CLUSTER_CTX --type cci"
+    fi
+
+    # Verify the context actually works
     echo ""
-    echo "  ✅ Cluster context is ready in your kubeconfig."
-    echo "     To switch to it, run:  kctx $CLUSTER_CTX"
-    echo ""
+    echo "-> Verifying cluster access..."
+    sleep 5
+    if timeout 30 kubectl --context "$CLUSTER_CTX" get ns >/dev/null 2>&1; then
+        echo "   ✅ Cluster access verified! kubectl is working."
+    else
+        echo "   ⚠️ Cluster auth not working yet. Pinniped may still be initializing."
+        echo "   If this persists, run: ./test-cluster-ctx.sh"
+    fi
 else
     echo "⚠️ Kubeconfig does not contain $CLUSTER_NAME yet."
     echo "   The cluster may still be provisioning. Run these manually when ready:"
     echo ""
     echo "   vcf context use <namespace-context>"
     echo "   vcf cluster register-vcfa-jwt-authenticator $CLUSTER_NAME"
-    echo "   vcf cluster kubeconfig get $CLUSTER_NAME"
-    echo "   Then switch with:  kctx <context-name>"
-    echo ""
+    echo "   vcf cluster kubeconfig get $CLUSTER_NAME --export-file ~/.kube/config"
+    echo "   grep $CLUSTER_NAME ~/.kube/config   # find the context with @"
+    echo "   vcf context create $CLUSTER_NAME --kubeconfig ~/.kube/config --kubecontext <name@ns> --type cci"
 fi
 
 
