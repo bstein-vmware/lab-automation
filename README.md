@@ -74,7 +74,7 @@ Choose this for the complete flow. Deploy runs **all prep steps first** (skippin
 * **On-the-fly Patching:** Automatically patches modules and injects Terraform variables:
   * Storage policy → `cluster-wld01-01a vSAN Storage Policy`
   * VKS cluster class → `builtin-generic-v3.6.0`
-  * Kubernetes version → `v1.34.1+vmware.1`
+  * Kubernetes version → `v1.35.2+vmware.1`
   * ArgoCD version → `3.0.19+vmware.1-vks.1`
   * Storage class → `cluster-wld01-01a-vsan-storage-policy`
 
