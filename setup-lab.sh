@@ -461,7 +461,7 @@ vcf context use supervisor-ctx 2>/dev/null || true
 VKR_VERSION="${K8S_VERSION#v}"
 VKR_READY=false
 for i in $(seq 1 40); do
-    KR_NAME=$(kubectl get kr -A --no-headers 2>/dev/null | grep "$VKR_VERSION" | awk '{print $2}' | head -1)
+    KR_NAME=$(kubectl get kr -A --no-headers 2>/dev/null | grep "$VKR_VERSION" | awk '{print $1}' | head -1)
     if [ -n "$KR_NAME" ]; then
         IS_READY=$(kubectl get kr "$KR_NAME" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
         IS_COMPATIBLE=$(kubectl get kr "$KR_NAME" -o jsonpath='{.status.conditions[?(@.type=="Compatible")].status}' 2>/dev/null)
