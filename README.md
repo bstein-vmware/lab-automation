@@ -20,6 +20,7 @@ The script starts by asking you two questions — which mode and which lab envir
 |--------|-------------|-----------|---------------------|
 | `vks` | Broadcom | broadcomadmin | 10.1.0.6 |
 | `adv` | all-apps | all-apps-admin | 10.1.0.2 |
+| `9.1` | Acme-East-A | acme-east-a | 10.1.8.132 |
 
 ### `prep` — Install & Configure (stops before Terraform deploy)
 
@@ -63,8 +64,8 @@ Choose this for the complete flow. Deploy runs **all prep steps first** (skippin
 * Deploys the Secret Store Service (with storage class config).
 * Deploys the Harbor Service (with lab password and storage class config).
 * Deploys the LCI Service (Local Consumption Interface).
-* Uses a generic PowerCLI script that handles new registration, version deduplication, and cluster install/upgrade automatically. YAML manifests live in `supervisor-services/`.
-* Deploys the Supervisor Mangement Proxy Service for cluster Observability metrics into VCF Operations
+* Deploys the Supervisor Management Proxy Service for cluster Observability metrics into VCF Operations.
+* Uses `install-supervisor-services.ps1` with the VMware.Sdk.vSphere 13.5.0 (9.x) SDK. The script handles new registration, version deduplication, **compatibility precheck** (polls until `COMPATIBLE` before proceeding), and cluster install/upgrade automatically. YAML manifests live in `supervisor-services/`.
 
 ### 3. Pimp the Terminal
 * **Zsh Integration:** Installs `zsh` and sets it as your default shell.
@@ -95,22 +96,24 @@ The script automatically configures three VCF CLI contexts:
 
 | Context | Type | Purpose |
 |---------|------|---------|
-| `supervisor-ctx` | Kubernetes | Supervisor cluster access (10.1.0.6 for vks, 10.1.0.2 for adv) |
+| `supervisor-ctx` | Kubernetes | Supervisor cluster access (endpoint is env-specific) |
 | `vcfa` | VCFA | VCFA org-level access (auto-a.site-a.vcf.lab) |
-| `e2e-niran-cls-01` | CCI | VKS workload cluster access |
+| `e2e-cls01` | CCI | VKS workload cluster access |
 
 For the VKS cluster context, the script:
-1. Auto-detects the VCFA namespace context
-2. Waits for Pinniped Concierge stabilization and cluster API readiness
-3. Registers the VCFA JWT authenticator on the cluster
-4. Fetches the kubeconfig
-5. Parses the context name and creates the CCI context
+1. Auto-detects the VCFA namespace context (`e2e-ns`)
+2. Polls until the cluster API is responding (up to 15 minutes)
+3. Waits 60 seconds for Pinniped Concierge to stabilize
+4. Registers the VCFA JWT authenticator (3 attempts with retry)
+5. Fetches the kubeconfig and parses the context name
+
+> If the cluster isn't ready by the time `deploy` completes, run `./ctx2.sh` once it is — it performs all of the above steps standalone without re-running the full setup.
 
 > All VCF CLI commands include timeout protection, non-interactive basic auth handling, and automatic prompt handling to prevent the script from hanging.
 
 ### 9. Finish Up
 * **Certificate Trust:** Downloads the VCFA SSL certificate chain for CLI trust.
-* **API Token Management:** Automatically generates and stores your VCFA refresh token via the VCFA OAuth API.
+* **API Token Management:** Automatically generates your VCFA refresh token via the VCFA OAuth API. The token is saved to `~/Desktop/vcfa_api_token.txt`, exported as `VCF_CLI_VCFA_API_TOKEN`, and persisted to `~/.zshrc` so it is available across sessions. Token generation only runs during the initial `setup-lab.sh` run — `ctx2.sh` reads the already-stored token.
 * **Credentials:** Saves lab username/password to `~/Desktop/password.txt`.
 * **Oh My Zsh:** Drops you into a fully authenticated, themed terminal when complete.
 
@@ -119,7 +122,9 @@ For the VKS cluster context, the script:
 | File | Description |
 |------|-------------|
 | `setup-lab.sh` | Main automation script (prep/deploy modes) |
-| `install-supervisor-services.ps1` | PowerCLI script — generic supervisor service install/upgrade |
+| `ctx-lib.sh` | Shared library — environment picker, token management, VCFA context, and cluster context functions |
+| `ctx2.sh` | Standalone script to (re)configure the VKS cluster context without re-running full setup |
+| `install-supervisor-services.ps1` | PowerCLI script — supervisor service registration, precheck, install, and upgrade (SDK 9.x) |
 | `vcfa-token.py` | Automated VCFA OAuth token generation |
 | `README.md` | This file |
 
