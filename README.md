@@ -64,6 +64,7 @@ Choose this for the complete flow. Deploy runs **all prep steps first** (skippin
 * Deploys the Harbor Service (with lab password and storage class config).
 * Deploys the LCI Service (Local Consumption Interface).
 * Uses a generic PowerCLI script that handles new registration, version deduplication, and cluster install/upgrade automatically. YAML manifests live in `supervisor-services/`.
+* Deploys the Supervisor Mangement Proxy Service for cluster Observability metrics into VCF Operations
 
 ### 3. Pimp the Terminal
 * **Zsh Integration:** Installs `zsh` and sets it as your default shell.
@@ -131,6 +132,7 @@ For the VKS cluster context, the script:
 | `argo-attach.yaml` | ArgoCD Attach Fling package YAML |
 | `secret-store-service.yaml` | Secret Store Service package YAML |
 | `secret-store-service-config.yaml` | Secret Store Service install config (storage class) |
+| `supervisor-management-proxy-service.yaml` | Supervisor Management Proxy Service package YAML |
 | `harbor-service.yaml` | Harbor Service package YAML |
 | `harbor-service-config.yaml` | Harbor Service install config (Harbor FQDN, lab password, and storage class) |
 | `lci-service.yaml` | Local Consumption Interface Service package YAML |
