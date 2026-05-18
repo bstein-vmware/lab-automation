@@ -281,6 +281,9 @@ vcf context create supervisor-ctx \
 echo "Setting supervisor-ctx as current context..."
 vcf context use supervisor-ctx 2>/dev/null || true
 
+echo "Set VCF CLI env variable to skip expiry check during vcf context refresh"
+vcf config set env.VCF_CLI_CONTEXT_REFRESH_EXPIRY_CHECK_SKIP true
+
 
 # --- 9. Content Library SSL Fix (pre-flight) ---
 echo ""
