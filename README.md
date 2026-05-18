@@ -26,7 +26,7 @@ The script starts by asking you two questions — which mode and which lab envir
 Choose this when you want to get the environment ready while VKS upgrades and ArgoCD deployments are still installing in vCenter.
 
 - Installs all CLIs & prerequisites
-- Installs and activates supervisor services (VKS upgrade, ArgoCD, ArgoCD Attach, Secret Store) via PowerCLI
+- Installs and activates supervisor services (VKS upgrade, ArgoCD, ArgoCD Attach, Secret Store, Harbor, and LCI) via PowerCLI
 - Configures Zsh + Oh My Zsh
 - Clones and patches the Terraform repo
 - Automatically generates and stores your VCFA API token
@@ -61,6 +61,8 @@ Choose this for the complete flow. Deploy runs **all prep steps first** (skippin
 * Deploys the ArgoCD Supervisor Service.
 * Deploys the ArgoCD Attach Fling.
 * Deploys the Secret Store Service (with storage class config).
+* Deploys the Harbor Service (with lab password and storage class config).
+* Deploys the LCI Service (Local Consumption Interface).
 * Uses a generic PowerCLI script that handles new registration, version deduplication, and cluster install/upgrade automatically. YAML manifests live in `supervisor-services/`.
 * Deploys the Supervisor Mangement Proxy Service for cluster Observability metrics into VCF Operations
 
@@ -81,7 +83,7 @@ Choose this for the complete flow. Deploy runs **all prep steps first** (skippin
 
 ### 6. Terraform Execution
 * **Phase 1:** Targeted apply for Supervisor Namespace creation.
-* **Phase 2:** Full apply for ArgoCD instances, VKS clusters, and remaining infrastructure.
+* **Phase 2:** Full apply for ArgoCD instances, VKS clusters, and remaining infrastructure. It also sets the ArgoCD admin user password to be the same as the lab password.
 * **Smart Retry:** Automatically handles the known VKS CRD provider bug with state refresh and retry logic.
 
 ### 7. Automated API Bug Fixes
@@ -131,3 +133,6 @@ For the VKS cluster context, the script:
 | `secret-store-service.yaml` | Secret Store Service package YAML |
 | `secret-store-service-config.yaml` | Secret Store Service install config (storage class) |
 | `supervisor-management-proxy-service.yaml` | Supervisor Management Proxy Service package YAML |
+| `harbor-service.yaml` | Harbor Service package YAML |
+| `harbor-service-config.yaml` | Harbor Service install config (Harbor FQDN, lab password, and storage class) |
+| `lci-service.yaml` | Local Consumption Interface Service package YAML |

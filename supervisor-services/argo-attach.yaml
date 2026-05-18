@@ -4,184 +4,49 @@ metadata:
   creationTimestamp: null
   name: argocd-attach.fling.vsphere.vmware.com
 spec:
-  displayName: argocd-attach
-  longDescription: argocd-attach.fling.vsphere.vmware.com
-  shortDescription: argocd-attach.fling.vsphere.vmware.com
+  displayName: ArgoCD Attach Service
+  longDescription: Provides the ability to auto attach clusters to ArgoCD
+  shortDescription: ArgoCD Auto Attach
 
 ---
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
   creationTimestamp: null
-  name: argocd-attach.fling.vsphere.vmware.com.1.0.7
+  name: argocd-attach.fling.vsphere.vmware.com.3.0.6
 spec:
   refName: argocd-attach.fling.vsphere.vmware.com
-  releasedAt: "2025-06-12T17:07:57Z"
+  releasedAt: "2026-02-19T15:47:16Z"
   template:
     spec:
       deploy:
       - kapp: {}
       fetch:
       - imgpkgBundle:
-          image: ghcr.io/warroyo/argocd-auto-attach@sha256:5c917e3dd6c57973f0a19e1662c7c7dc1ab85e3cc02eb0ba756a638bbc2cd34b
+          image: ghcr.io/warroyo/argocd-attach-service@sha256:742381de82c7732dfaf9f03dcc5dab3c4736a692830b53df8f1f9086fcf937ef
       template:
-      - helmTemplate:
-          name: metacontroller
-          path: upstream
       - ytt:
-          ignoreUnknownComments: true
           paths:
-          - '-'
+          - config
       - kbld:
           paths:
           - '-'
           - .imgpkg/images.yml
   valuesSchema:
     openAPIv3:
+      additionalProperties: false
       properties:
-        affinity:
-          default: {}
-          type: object
-        argo_namespace:
-          default: ""
-          type: string
-        clusterRole:
-          properties:
-            aggregationRule:
-              default: {}
-              type: object
-            rules:
-              default: []
-              items:
-                properties:
-                  apiGroups:
-                    default: []
-                    items:
-                      default: '*'
-                      type: string
-                    type: array
-                  resources:
-                    default: []
-                    items:
-                      default: '*'
-                      type: string
-                    type: array
-                  verbs:
-                    default: []
-                    items:
-                      default: '*'
-                      type: string
-                    type: array
-                type: object
-              type: array
-          type: object
-        command:
-          default: /usr/bin/metacontroller
-          description: Command which is used to start metacontroller
-          type: string
-        commandArgs:
+        blocked_namespaces:
           default: []
-          description: Command arguments which are used to start metacontroller
           items:
-            default: --zap-log-level=4
+            default: ""
             type: string
           type: array
-        fullnameOverride:
-          default: ""
-          type: string
-        image:
-          properties:
-            pullPolicy:
-              default: IfNotPresent
-              type: string
-            repository:
-              default: ghcr.io/metacontroller/metacontroller
-              type: string
-            tag:
-              default: ""
-              type: string
-          type: object
-        imagePullSecrets:
-          default: []
-          items: {}
-          type: array
-        nameOverride:
-          default: ""
-          type: string
         namespace:
           default: ""
           type: string
-        namespaceOverride:
-          default: metacontroller
+        resync_period:
+          default: "60"
           type: string
-        nodeSelector:
-          default: {}
-          type: object
-        podAnnotations:
-          default: {}
-          type: object
-        podDisruptionBudget:
-          default: {}
-          description: which can be enabled when running more than one replica
-          type: object
-        podSecurityContext:
-          default: {}
-          type: object
-        priorityClassName:
-          default: ""
-          description: The name of the PriorityClass that will be assigned to metacontroller
-          type: string
-        probes:
-          properties:
-            port:
-              default: 8081
-              type: integer
-          type: object
-        python_image:
-          default: harbor.vcf.lab/niran/python:3.3
-          type: string
-        rbac:
-          properties:
-            create:
-              default: true
-              type: boolean
-          type: object
-        replicas:
-          default: 1
-          type: integer
-        resources:
-          default: {}
-          type: object
-        securityContext:
-          default: {}
-          type: object
-        service:
-          properties:
-            enabled:
-              default: false
-              type: boolean
-            ports:
-              default: []
-              items: {}
-              type: array
-          type: object
-        serviceAccount:
-          properties:
-            annotations:
-              default: {}
-              type: object
-            create:
-              default: true
-              type: boolean
-            name:
-              default: ""
-              description: The name of the service account to use. If not set and
-                create is true, a name is generated using the fullname template
-              type: string
-          type: object
-        tolerations:
-          default: []
-          items: {}
-          type: array
       type: object
-  version: 1.0.7
+  version: 3.0.6
