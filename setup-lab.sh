@@ -336,6 +336,7 @@ else
         ["argocd-service.vsphere.vmware.com"]="$SVC_DIR/argocd-service.yaml"
         ["argocd-attach.fling.vsphere.vmware.com"]="$SVC_DIR/argo-attach.yaml"
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service.yaml"
+        ["supervisor-management-proxy.vmware.com"]="$SVC_DIR/supervisor-management-proxy-service.yaml"
     )
     declare -A _SERVICE_CONFIGS=(
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service-config.yaml"
