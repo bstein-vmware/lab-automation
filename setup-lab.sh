@@ -32,16 +32,18 @@ echo ""
 
 echo "Which lab environment?"
 echo ""
-echo "  1) vks   → VKS Lab       (org: Broadcom,  user: broadcomadmin)"
-echo "  2) adv   → Advanced Lab  (org: all-apps,  user: all-apps-admin)"
+echo "  1) vks   → VKS Lab          (org: Broadcom,    user: broadcomadmin)"
+echo "  2) adv   → Advanced Lab     (org: all-apps,    user: all-apps-admin)"
+echo "  3) ss    → 9.1 Single Site  (org: Acme-East-A, user: acme-east-a)"
 echo ""
-read -p "Enter your choice [vks/adv]: " LAB_ENV
+read -p "Enter your choice [vks/adv/ss]: " LAB_ENV
 echo ""
 
 case "$LAB_ENV" in
     1|vks|v)   LAB_ENV="vks" ;;
     2|adv|a)   LAB_ENV="adv" ;;
-    *) echo "❌ Invalid choice. Please run again and choose 'vks' or 'adv'."; exit 1 ;;
+    3|ss|s)    LAB_ENV="ss" ;;
+    *) echo "❌ Invalid choice. Please run again and choose 'vks', 'adv', or 'ss'."; exit 1 ;;
 esac
 
 echo "Running for ${LAB_ENV^^} environment..."
@@ -65,7 +67,7 @@ if [[ "$LAB_ENV" == "vks" ]]; then
     STORAGE_POLICY="vSAN Default Storage Policy"
     STORAGE_CLASS="vsan-default-storage-policy"
     NS_STORAGE_LIMIT="100000Mi"
-else
+elif [[ "$LAB_ENV" == "adv" ]]; then
     VCFA_ORG="all-apps"
     VCFA_USER="all-apps-admin"
     SUPERVISOR_ENDPOINT="10.1.0.2"
@@ -75,6 +77,16 @@ else
     STORAGE_POLICY="cluster-wld01-01a vSAN Storage Policy"
     STORAGE_CLASS="cluster-wld01-01a-vsan-storage-policy"
     NS_STORAGE_LIMIT="102400Mi"
+else
+    VCFA_ORG="Acme-East-A"
+    VCFA_USER="acme-east-a"
+    SUPERVISOR_ENDPOINT="10.1.8.132"
+    REGION_NAME="us-east-a"
+    VPC_NAME="default-us-east-a"
+    ZONE_NAME="z-wld-a"
+    STORAGE_POLICY="vSAN Default Storage Policy"
+    STORAGE_CLASS="vsan-default-storage-policy"
+    NS_STORAGE_LIMIT="100000Mi"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -390,6 +402,7 @@ argo_password       = "$LAB_PASS"
 storage_class_name      = "$STORAGE_POLICY"
 vks_storage_class       = "$STORAGE_CLASS"
 ns_storage_limit        = "$NS_STORAGE_LIMIT"
+argo_password       = "$LAB_PASS"
 EOF
 fi
 
