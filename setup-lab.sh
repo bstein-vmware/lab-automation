@@ -265,9 +265,12 @@ else
         ["argocd-service.vsphere.vmware.com"]="$SVC_DIR/argocd-service.yaml"
         ["argocd-attach.fling.vsphere.vmware.com"]="$SVC_DIR/argo-attach.yaml"
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service.yaml"
+        ["harbor.tanzu.vmware.com"]="$SVC_DIR/harbor-service.yaml"
+        ["cci-ns.vmware.com"]="$SVC_DIR/lci-service.yaml"
     )
     declare -A _SERVICE_CONFIGS=(
         ["secret-store.vsphere.vmware.com"]="$SVC_DIR/secret-store-service-config.yaml"
+        ["harbor.tanzu.vmware.com"]="$SVC_DIR/harbor-service-config.yaml"
     )
 
     for _SVC in "${!_SERVICES[@]}"; do
@@ -305,6 +308,7 @@ k8s_version         = "$K8S_VERSION"
 vcfa_refresh_token  = "$VCF_CLI_VCFA_API_TOKEN"
 cluster_class       = "builtin-generic-v3.6.0"
 argocd_version      = "$ARGOCD_VERSION"
+argo_password       = "$LAB_PASS"
 storage_class_name      = "$STORAGE_POLICY"
 vks_storage_class       = "$STORAGE_CLASS"
 ns_storage_limit        = "$NS_STORAGE_LIMIT"
